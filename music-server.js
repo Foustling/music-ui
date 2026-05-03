@@ -3,8 +3,8 @@ const fs = require("fs");
 const path = require("path");
 const { Readable } = require("stream");
 
-const PORT = 8090;
-const NAVIDROME = "http://127.0.0.1:4533";
+const PORT = Number(process.env.PORT) || 8090;
+const NAVIDROME = process.env.NAVIDROME_URL || "http://127.0.0.1:4533";
 
 function contentTypeFor(file) {
   if (file.endsWith(".html")) return "text/html; charset=utf-8";
@@ -115,6 +115,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Music UI running at http://127.0.0.1:${PORT}`);
+  console.log(`Music UI running locally at http://127.0.0.1:${PORT}`);
+  console.log(`Music UI also available on your LAN at http://YOUR_DEVICE_IP:${PORT}`);
   console.log(`Proxying Navidrome from ${NAVIDROME}`);
 });
