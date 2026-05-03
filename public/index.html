@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Music UI</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1>Music UI</h1>
+        <p>Your custom Navidrome player</p>
+      </div>
+
+      <button id="shuffleBtn" class="secondary-btn">Shuffle</button>
+    </header>
+
+    <section id="loginBox" class="login-card">
+      <h2>Connect</h2>
+      <p>Log in with your Navidrome account.</p>
+
+      <input id="username" placeholder="Username" autocomplete="username" />
+      <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
+
+      <button id="loginBtn" class="primary-btn">Connect</button>
+
+      <p id="error" class="error"></p>
+    </section>
+
+    <section id="library" class="hidden">
+      <div class="section-title">
+        <h2>Random tracks</h2>
+        <p>Tap a song to play it.</p>
+      </div>
+
+      <div id="songGrid" class="song-grid"></div>
+    </section>
+  </main>
+
+  <footer id="player" class="player hidden">
+    <div class="now-playing">
+      <img id="nowCover" alt="" />
+      <div>
+        <strong id="nowTitle">Nothing playing</strong>
+        <span id="nowArtist"></span>
+      </div>
+    </div>
+
+    <audio id="audio" controls></audio>
+  </footer>
+
+  <script src="/app2.js?v=3"></script>
+</body>
+</html>
