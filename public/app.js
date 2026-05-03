@@ -1,4 +1,7 @@
-let auth = null;
+let auth = {
+  username: sessionStorage.getItem("navidromeUsername") || "",
+  password: sessionStorage.getItem("navidromePassword") || "",
+};
 
 const loginBox = document.getElementById("loginBox");
 const loginBtn = document.getElementById("loginBtn");
@@ -14,6 +17,65 @@ const audio = document.getElementById("audio");
 const nowCover = document.getElementById("nowCover");
 const nowTitle = document.getElementById("nowTitle");
 const nowArtist = document.getElementById("nowArtist");
+const welcome = document.getElementById("welcome");
+
+function updateWelcomeText() {
+  if (!welcome) return;
+
+  welcome.textContent = auth.username
+    ? `Welcome, ${auth.username}`
+    : "Music UI";
+}
+
+function saveAuth() {
+  sessionStorage.setItem("navidromeUsername", auth.username);
+  sessionStorage.setItem("navidromePassword", auth.password);
+}
+
+function clearAuth() {
+  auth = {
+    username: "",
+    password: "",
+  };
+
+  sessionStorage.removeItem("navidromeUsername");
+  sessionStorage.removeItem("navidromePassword");
+
+  updateWelcomeText();
+}
+
+function showLoggedInUI() {
+  loginBox.classList.add("hidden");
+  library.classList.remove("hidden");
+  shuffleBtn.classList.remove("hidden");
+  updateWelcomeText();
+}
+
+function showLoggedOutUI() {
+  loginBox.classList.remove("hidden");
+  library.classList.add("hidden");
+  shuffleBtn.classList.add("hidden");
+  player.classList.add("hidden");
+  updateWelcomeText();
+}
+
+const hasSavedAuth = auth.username && auth.password;
+
+if (hasSavedAuth) {
+  loginBox.classList.add("hidden");
+  library.classList.remove("hidden");
+  shuffleBtn.classList.remove("hidden");
+
+  usernameInput.value = auth.username;
+  passwordInput.value = auth.password;
+
+  updateWelcomeText();
+
+  songGrid.innerHTML = `<p style="color:#94a3b8">Reconnecting...</p>`;
+} else {
+  updateWelcomeText();
+  shuffleBtn.classList.add("hidden");
+}
 
 function getAuthParams() {
   return new URLSearchParams({
@@ -24,7 +86,6 @@ function getAuthParams() {
     f: "json",
   });
 }
-
 
 async function apiCall(endpoint, params = {}) {
   const query = getAuthParams();
@@ -37,6 +98,7 @@ async function apiCall(endpoint, params = {}) {
   const response = await fetch(url);
 
   let json;
+
   try {
     json = await response.json();
   } catch (err) {
@@ -55,7 +117,6 @@ async function apiCall(endpoint, params = {}) {
 
   return subsonic;
 }
-
 
 function streamUrl(songId) {
   const query = getAuthParams();
@@ -80,7 +141,6 @@ function fallbackCover() {
     </svg>
   `);
 }
-
 
 function createSongCard(song) {
   const card = document.createElement("button");
@@ -145,12 +205,18 @@ function playSong(song) {
     nowCover.src = fallbackCover();
   };
 
+  audio.pause();
+  audio.removeAttribute("src");
+  audio.load();
+
   audio.src = streamUrl(song.id);
-  audio.play().catch(() => {
-    // Browser may block autoplay.
-  });
+  audio.load();
 
   player.classList.remove("hidden");
+
+  audio.play().catch((err) => {
+    console.error("Playback error:", err);
+  });
 }
 
 async function login() {
@@ -172,16 +238,42 @@ async function login() {
 
     await apiCall("ping");
 
-    loginBox.classList.add("hidden");
-    library.classList.remove("hidden");
+    saveAuth();
+    showLoggedInUI();
 
     await loadSongs();
   } catch (err) {
     errorBox.textContent = err.message;
-    auth = null;
+    clearAuth();
+    showLoggedOutUI();
   } finally {
     loginBtn.disabled = false;
     loginBtn.textContent = "Connect";
+  }
+}
+
+async function autoLogin() {
+  if (!auth.username || !auth.password) {
+    showLoggedOutUI();
+    return;
+  }
+
+  usernameInput.value = auth.username;
+  passwordInput.value = auth.password;
+
+  try {
+    await apiCall("ping");
+
+    showLoggedInUI();
+
+    await loadSongs();
+  } catch (err) {
+    console.error("Auto-login failed:", err);
+
+    clearAuth();
+    showLoggedOutUI();
+
+    errorBox.textContent = "Session expired. Please log in again.";
   }
 }
 
@@ -194,6 +286,8 @@ passwordInput.addEventListener("keydown", (event) => {
 });
 
 shuffleBtn.addEventListener("click", async () => {
-  if (!auth) return;
+  if (!auth.username || !auth.password) return;
   await loadSongs();
 });
+
+autoLogin();
