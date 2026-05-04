@@ -19,6 +19,11 @@ const nowTitle = document.getElementById("nowTitle");
 const nowArtist = document.getElementById("nowArtist");
 const welcome = document.getElementById("welcome");
 
+const playPauseBtn = document.getElementById("playPauseBtn");
+const seekBar = document.getElementById("seekBar");
+const currentTimeBox = document.getElementById("currentTime");
+const durationBox = document.getElementById("duration");
+
 function updateWelcomeText() {
   if (!welcome) return;
 
@@ -142,9 +147,34 @@ function fallbackCover() {
   `);
 }
 
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds)) return "0:00";
+
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60).toString().padStart(2, "0");
+
+  return `${mins}:${secs}`;
+}
+
+function updatePlayPauseButton() {
+  if (!playPauseBtn) return;
+  playPauseBtn.textContent = audio.paused ? "▶" : "⏸";
+}
+
+function resetPlayerProgress() {
+  seekBar.value = 0;
+  seekBar.max = 0;
+  currentTimeBox.textContent = "0:00";
+  durationBox.textContent = "0:00";
+  updatePlayPauseButton();
+}
+
 function createSongCard(song) {
   const card = document.createElement("button");
   card.className = "song-card";
+
+  const coverWrap = document.createElement("div");
+  coverWrap.className = "cover-wrap";
 
   const img = document.createElement("img");
   img.src = song.coverArt ? coverArtUrl(song.coverArt) : fallbackCover();
@@ -153,13 +183,15 @@ function createSongCard(song) {
     img.src = fallbackCover();
   };
 
+  coverWrap.appendChild(img);
+
   const title = document.createElement("strong");
   title.textContent = song.title || "Unknown title";
 
   const artist = document.createElement("span");
   artist.textContent = song.artist || "Unknown artist";
 
-  card.appendChild(img);
+  card.appendChild(coverWrap);
   card.appendChild(title);
   card.appendChild(artist);
 
@@ -209,6 +241,8 @@ function playSong(song) {
   audio.removeAttribute("src");
   audio.load();
 
+  resetPlayerProgress();
+
   audio.src = streamUrl(song.id);
   audio.load();
 
@@ -216,6 +250,7 @@ function playSong(song) {
 
   audio.play().catch((err) => {
     console.error("Playback error:", err);
+    updatePlayPauseButton();
   });
 }
 
@@ -288,6 +323,42 @@ passwordInput.addEventListener("keydown", (event) => {
 shuffleBtn.addEventListener("click", async () => {
   if (!auth.username || !auth.password) return;
   await loadSongs();
+});
+
+playPauseBtn.addEventListener("click", () => {
+  if (!audio.src) return;
+
+  if (audio.paused) {
+    audio.play().catch((err) => {
+      console.error("Playback error:", err);
+    });
+  } else {
+    audio.pause();
+  }
+});
+
+audio.addEventListener("play", updatePlayPauseButton);
+audio.addEventListener("pause", updatePlayPauseButton);
+
+audio.addEventListener("loadedmetadata", () => {
+  seekBar.max = audio.duration || 0;
+  durationBox.textContent = formatTime(audio.duration);
+});
+
+audio.addEventListener("timeupdate", () => {
+  seekBar.value = audio.currentTime || 0;
+  currentTimeBox.textContent = formatTime(audio.currentTime);
+});
+
+audio.addEventListener("ended", () => {
+  seekBar.value = 0;
+  currentTimeBox.textContent = "0:00";
+  updatePlayPauseButton();
+});
+
+seekBar.addEventListener("input", () => {
+  if (!audio.src) return;
+  audio.currentTime = Number(seekBar.value);
 });
 
 autoLogin();

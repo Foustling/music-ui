@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Music UI</title>
-  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/style.css?v=200" />
 </head>
 <body>
   <main class="app">
@@ -41,16 +41,37 @@
 
   <footer id="player" class="player hidden">
     <div class="now-playing">
-      <img id="nowCover" alt="" />
-      <div>
+      <div class="mini-cover">
+        <img id="nowCover" alt="" />
+      </div>
+
+      <div class="track-meta">
         <strong id="nowTitle">Nothing playing</strong>
         <span id="nowArtist"></span>
       </div>
     </div>
 
-    <audio id="audio" controls></audio>
+    <div class="custom-player">
+      <button id="playPauseBtn" class="player-btn">▶</button>
+
+      <span id="currentTime" class="time">0:00</span>
+
+      <input
+        id="seekBar"
+        class="seek-bar"
+        type="range"
+        min="0"
+        max="0"
+        value="0"
+        step="0.1"
+      />
+
+      <span id="duration" class="time">0:00</span>
+
+      <audio id="audio"></audio>
+    </div>
   </footer>
 
-  <script src="/app.js?v=5"></script>
+  <script src="/app.js?v=200"></script>
 </body>
 </html>
